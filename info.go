@@ -52,6 +52,7 @@ func (c *Client) GetInfo(dir, name string) ([]byte, error) {
 	}
 
 	// Prepare Query Values
+	// TODO: Add ability to overwrite default fields?
 	values := []string{
 		fmt.Sprintf("action=%s_information", dir[:len(dir)-1]),
 		"request[slug]=" + name,
