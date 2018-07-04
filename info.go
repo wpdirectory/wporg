@@ -40,8 +40,9 @@ var (
 )
 
 // GetInfo fetches Plugin/Theme info from the API
-func (c *Client) GetInfo(dir, name string) (*InfoResponse, error) {
+func (c *Client) GetInfo(dir, name string) ([]byte, error) {
 	var info *InfoResponse
+	var bytes []byte
 
 	// Main URL Components
 	u := &url.URL{
@@ -64,24 +65,27 @@ func (c *Client) GetInfo(dir, name string) (*InfoResponse, error) {
 	// Make the Request
 	resp, err := c.getRequest(URL)
 	if err != nil {
-		return info, err
+		return bytes, err
 	}
 
 	defer drainAndClose(resp.Body, &err)
 
-	bytes, err := ioutil.ReadAll(resp.Body)
+	bytes, err = ioutil.ReadAll(resp.Body)
 	if err != nil {
-		return info, err
+		return bytes, err
 	}
-
-	//fmt.Printf("Resp: %s\n", string(bytes))
 
 	err = json.Unmarshal(bytes, &info)
 	if err != nil {
-		return info, err
+		return bytes, err
 	}
 
-	return info, err
+	bytes, err = json.Marshal(info)
+	if err != nil {
+		return bytes, err
+	}
+
+	return bytes, err
 }
 
 // InfoResponse contains information about a Plugin or Theme
