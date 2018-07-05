@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"io/ioutil"
 	"net/url"
+	"reflect"
 	"strings"
 )
 
@@ -30,7 +31,7 @@ var (
 		"request[fields][tags]=1",
 		"request[fields][donate_link]=1",
 		"request[fields][contributors]=1",
-		"request[fields][compatibility]=1",
+		"request[fields][compatibility]=0", // Find a use for this, always seems to return []
 		"request[fields][versions]=1",
 		"request[fields][version]=1",
 		"request[fields][screenshots]=1",
@@ -91,26 +92,25 @@ func (c *Client) GetInfo(dir, name string) ([]byte, error) {
 
 // InfoResponse contains information about a Plugin or Theme
 type InfoResponse struct {
-	Name                   string        `json:"name"`
-	Slug                   string        `json:"slug"`
-	Version                string        `json:"version"`
-	Author                 string        `json:"author"`
-	AuthorProfile          string        `json:"author_profile"`
-	Contributors           [][]string    `json:"contributors"`
-	Requires               string        `json:"requires"`
-	Tested                 string        `json:"tested"`
-	RequiresPHP            string        `json:"requires_php"`
-	Compatibility          []interface{} `json:"compatibility"`
-	Rating                 int           `json:"rating"`
-	Ratings                []Rating      `json:"ratings"`
-	NumRatings             int           `json:"num_ratings"`
-	SupportThreads         int           `json:"support_threads"`
-	SupportThreadsResolved int           `json:"support_threads_resolved"`
-	ActiveInstalls         int           `json:"active_installs"`
-	Downloaded             int           `json:"downloaded"`
-	LastUpdated            string        `json:"last_updated"`
-	Added                  string        `json:"added"`
-	Homepage               string        `json:"homepage"`
+	Name                   string     `json:"name"`
+	Slug                   string     `json:"slug"`
+	Version                string     `json:"version"`
+	Author                 string     `json:"author"`
+	AuthorProfile          string     `json:"author_profile"`
+	Contributors           [][]string `json:"contributors"`
+	Requires               string     `json:"requires"`
+	Tested                 string     `json:"tested"`
+	RequiresPHP            string     `json:"requires_php"`
+	Rating                 int        `json:"rating"`
+	Ratings                []Rating   `json:"ratings"`
+	NumRatings             int        `json:"num_ratings"`
+	SupportThreads         int        `json:"support_threads"`
+	SupportThreadsResolved int        `json:"support_threads_resolved"`
+	ActiveInstalls         int        `json:"active_installs"`
+	Downloaded             int        `json:"downloaded"`
+	LastUpdated            string     `json:"last_updated"`
+	Added                  string     `json:"added"`
+	Homepage               string     `json:"homepage"`
 	Sections               struct {
 		Description string `json:"description"`
 		Faq         string `json:"faq"`
@@ -124,6 +124,7 @@ type InfoResponse struct {
 	StableTag        string       `json:"stable_tag"`
 	Versions         [][]string   `json:"versions"`
 	DonateLink       string       `json:"donate_link"`
+	//Compatibility          []interface{} `json:"-"`
 }
 
 // Rating contains information about ratings of a specific star level (0-5)
@@ -143,12 +144,14 @@ type Screenshot struct {
 func (r *InfoResponse) UnmarshalJSON(data []byte) error {
 	type Alias InfoResponse
 	aux := &struct {
-		Version      json.Number `json:"version"`
-		Contributors interface{} `json:"contributors"`
-		Ratings      interface{} `json:"ratings"`
-		Screenshots  interface{} `json:"screenshots"`
-		Tags         interface{} `json:"tags"`
-		Versions     interface{} `json:"versions"`
+		Version       json.Number `json:"version"`
+		AuthorProfile interface{} `json:"author_profile"`
+		RequiresPHP   interface{} `json:"requires_php"`
+		Contributors  interface{} `json:"contributors"`
+		Ratings       interface{} `json:"ratings"`
+		Screenshots   interface{} `json:"screenshots"`
+		Tags          interface{} `json:"tags"`
+		Versions      interface{} `json:"versions"`
 		*Alias
 	}{
 		Alias: (*Alias)(r),
@@ -156,67 +159,86 @@ func (r *InfoResponse) UnmarshalJSON(data []byte) error {
 	if err := json.Unmarshal(data, &aux); err != nil {
 		return err
 	}
+
 	// Set Version as string
 	r.Version = aux.Version.String()
 
-	// Unmarshal JSON into interface to parse extra fields
-	var raw map[string]interface{}
-	if err := json.Unmarshal(data, &raw); err != nil {
-		return err
+	// AuthorProfile can occasionally be a boolean (false)
+	switch v := aux.AuthorProfile.(type) {
+	case string:
+		r.AuthorProfile = v
+	default:
+		r.AuthorProfile = ""
+	}
+
+	// RequiresPHP can occasionally be a boolean (false)
+	switch v := aux.RequiresPHP.(type) {
+	case string:
+		r.RequiresPHP = v
+	default:
+		r.RequiresPHP = ""
+	}
+
+	// RequiresPHP can occasionally be a boolean (false)
+	switch v := aux.RequiresPHP.(type) {
+	case string:
+		r.RequiresPHP = v
+	default:
+		r.RequiresPHP = ""
 	}
 
 	// Parse Contributors
-	var contribs [][]string
-	for k, v := range raw["contributors"].(map[string]interface{}) {
-		contrib := []string{
-			k, v.(string),
+	if reflect.TypeOf(aux.Contributors).Kind() == reflect.Map {
+		for k, v := range aux.Contributors.(map[string]interface{}) {
+			contrib := []string{
+				k, v.(string),
+			}
+			r.Contributors = append(r.Contributors, contrib)
 		}
-		contribs = append(contribs, contrib)
 	}
-	r.Contributors = contribs
 
 	// Parse Ratings
-	var ratings []Rating
-	for k, v := range raw["ratings"].(map[string]interface{}) {
-		rating := Rating{
-			Stars:  k,
-			Number: int(v.(float64)),
+	if reflect.TypeOf(aux.Ratings).Kind() == reflect.Map {
+		for k, v := range aux.Ratings.(map[string]interface{}) {
+			rating := Rating{
+				Stars:  k,
+				Number: int(v.(float64)),
+			}
+			r.Ratings = append(r.Ratings, rating)
 		}
-		ratings = append(ratings, rating)
 	}
-	r.Ratings = ratings
 
 	// Parse Screenshots
-	var screenshots []Screenshot
-	for _, v := range raw["screenshots"].(map[string]interface{}) {
-		s := v.(map[string]interface{})
-		screenshot := Screenshot{
-			Src:     s["src"].(string),
-			Caption: s["caption"].(string),
+	if reflect.TypeOf(aux.Screenshots).Kind() == reflect.Map {
+		for _, v := range aux.Screenshots.(map[string]interface{}) {
+			s := v.(map[string]interface{})
+			screenshot := Screenshot{
+				Src:     s["src"].(string),
+				Caption: s["caption"].(string),
+			}
+			r.Screenshots = append(r.Screenshots, screenshot)
 		}
-		screenshots = append(screenshots, screenshot)
 	}
-	r.Screenshots = screenshots
 
 	// Parse Tags
-	var tags [][]string
-	for k, v := range raw["tags"].(map[string]interface{}) {
-		tag := []string{
-			k, v.(string),
+	if reflect.TypeOf(aux.Tags).Kind() == reflect.Map {
+		for k, v := range aux.Tags.(map[string]interface{}) {
+			tag := []string{
+				k, v.(string),
+			}
+			r.Tags = append(r.Tags, tag)
 		}
-		tags = append(tags, tag)
 	}
-	r.Tags = tags
 
 	// Parse Versions
-	var versions [][]string
-	for k, v := range raw["versions"].(map[string]interface{}) {
-		version := []string{
-			k, v.(string),
+	if reflect.TypeOf(aux.Versions).Kind() == reflect.Map {
+		for k, v := range aux.Versions.(map[string]interface{}) {
+			version := []string{
+				k, v.(string),
+			}
+			r.Versions = append(r.Versions, version)
 		}
-		versions = append(versions, version)
 	}
-	r.Versions = versions
 
 	return nil
 }
