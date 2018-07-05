@@ -9,8 +9,8 @@ import (
 
 // Client contains data required for making requests to the API
 type Client struct {
-	userAgent  string
-	httpClient *http.Client
+	UserAgent  string
+	HTTPClient *http.Client
 }
 
 // NewClient returns a new client for accessing the WordPress.org APIs
@@ -21,13 +21,13 @@ func NewClient(options ...func(c *Client)) *Client {
 	}
 
 	// Set default user-agent if not set
-	if c.userAgent == "" {
-		c.userAgent = "wporg/1.0"
+	if c.UserAgent == "" {
+		c.UserAgent = "wporg/1.0"
 	}
 
 	// Set default client if not set
-	if c.httpClient == nil {
-		c.httpClient = getDefaultClient()
+	if c.HTTPClient == nil {
+		c.HTTPClient = getDefaultClient()
 	}
 
 	return c

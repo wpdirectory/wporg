@@ -14,9 +14,9 @@ func (c *Client) getRequest(URL string) (*http.Response, error) {
 	}
 
 	// Set User Agent
-	req.Header.Set("User-Agent", c.userAgent)
+	req.Header.Set("User-Agent", c.UserAgent)
 
-	resp, err := c.httpClient.Do(req)
+	resp, err := c.HTTPClient.Do(req)
 	if err != nil {
 		return resp, err
 	}
@@ -39,9 +39,9 @@ func (c *Client) postRequest(URL string, body []byte) (*http.Response, error) {
 	}
 
 	// Set User Agent
-	req.Header.Set("User-Agent", c.userAgent)
+	req.Header.Set("User-Agent", c.UserAgent)
 
-	resp, err := c.httpClient.Do(req)
+	resp, err := c.HTTPClient.Do(req)
 	if err != nil {
 		return resp, err
 	}
