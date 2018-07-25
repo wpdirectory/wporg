@@ -2,10 +2,12 @@ package wporg
 
 import (
 	"encoding/json"
+	"errors"
 	"fmt"
 	"io/ioutil"
 	"net/url"
 	"reflect"
+	"strconv"
 	"strings"
 )
 
@@ -75,6 +77,12 @@ func (c *Client) GetInfo(dir, name string) ([]byte, error) {
 	bytes, err = ioutil.ReadAll(resp.Body)
 	if err != nil {
 		return bytes, err
+	}
+
+	//log.Fatalf("Body: %s", bytes)
+
+	if string(bytes) == "false" {
+		return bytes, errors.New("No data returned")
 	}
 
 	err = json.Unmarshal(bytes, &info)
@@ -149,6 +157,7 @@ func (r *InfoResponse) UnmarshalJSON(data []byte) error {
 		RequiresPHP   interface{} `json:"requires_php"`
 		Contributors  interface{} `json:"contributors"`
 		Ratings       interface{} `json:"ratings"`
+		NumRatings    interface{} `json:"num_ratings"`
 		Screenshots   interface{} `json:"screenshots"`
 		Tags          interface{} `json:"tags"`
 		Versions      interface{} `json:"versions"`
@@ -162,6 +171,16 @@ func (r *InfoResponse) UnmarshalJSON(data []byte) error {
 
 	// Set Version as string
 	r.Version = aux.Version.String()
+	/*
+		switch v := aux.Version.(type) {
+		case string:
+			r.Version = v
+		case int:
+			r.Version = strconv.Itoa(v)
+		default:
+			r.Version = ""
+		}
+	*/
 
 	// AuthorProfile can occasionally be a boolean (false)
 	switch v := aux.AuthorProfile.(type) {
@@ -188,7 +207,7 @@ func (r *InfoResponse) UnmarshalJSON(data []byte) error {
 	}
 
 	// Parse Contributors
-	if reflect.TypeOf(aux.Contributors).Kind() == reflect.Map {
+	if aux.Contributors != nil && reflect.TypeOf(aux.Contributors).Kind() == reflect.Map {
 		for k, v := range aux.Contributors.(map[string]interface{}) {
 			contrib := []string{
 				k, v.(string),
@@ -200,12 +219,40 @@ func (r *InfoResponse) UnmarshalJSON(data []byte) error {
 	// Parse Ratings
 	if reflect.TypeOf(aux.Ratings).Kind() == reflect.Map {
 		for k, v := range aux.Ratings.(map[string]interface{}) {
+			var num int
+			var err error
+			switch t := v.(type) {
+			case float64:
+				num = int(t)
+			case string:
+				num, err = strconv.Atoi(t)
+				if err != nil {
+					num = 0
+				}
+			default:
+				num = 0
+			}
 			rating := Rating{
 				Stars:  k,
-				Number: int(v.(float64)),
+				Number: num,
 			}
 			r.Ratings = append(r.Ratings, rating)
 		}
+	}
+
+	// NumRatings can be a string "0" when zero
+	switch v := aux.NumRatings.(type) {
+	case int:
+		r.NumRatings = v
+	case string:
+		num, err := strconv.Atoi(v)
+		if err != nil {
+			r.NumRatings = 0
+		} else {
+			r.NumRatings = num
+		}
+	default:
+		r.NumRatings = 0
 	}
 
 	// Parse Screenshots
