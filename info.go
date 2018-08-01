@@ -150,8 +150,9 @@ type Screenshot struct {
 func (r *InfoResponse) UnmarshalJSON(data []byte) error {
 	type Alias InfoResponse
 	aux := &struct {
-		Version       json.Number `json:"version"`
+		Version       interface{} `json:"version"`
 		AuthorProfile interface{} `json:"author_profile"`
+		Requires      interface{} `json:"requires"`
 		RequiresPHP   interface{} `json:"requires_php"`
 		Contributors  interface{} `json:"contributors"`
 		Ratings       interface{} `json:"ratings"`
@@ -168,17 +169,14 @@ func (r *InfoResponse) UnmarshalJSON(data []byte) error {
 	}
 
 	// Set Version as string
-	r.Version = aux.Version.String()
-	/*
-		switch v := aux.Version.(type) {
-		case string:
-			r.Version = v
-		case int:
-			r.Version = strconv.Itoa(v)
-		default:
-			r.Version = ""
-		}
-	*/
+	switch v := aux.Version.(type) {
+	case string:
+		r.Version = v
+	case int:
+		r.Version = strconv.Itoa(v)
+	default:
+		r.Version = ""
+	}
 
 	// AuthorProfile can occasionally be a boolean (false)
 	switch v := aux.AuthorProfile.(type) {
@@ -186,6 +184,14 @@ func (r *InfoResponse) UnmarshalJSON(data []byte) error {
 		r.AuthorProfile = v
 	default:
 		r.AuthorProfile = ""
+	}
+
+	// Requires can occasionally be a boolean (false)
+	switch v := aux.Requires.(type) {
+	case string:
+		r.Requires = v
+	default:
+		r.Requires = ""
 	}
 
 	// RequiresPHP can occasionally be a boolean (false)
