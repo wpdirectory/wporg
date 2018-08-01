@@ -3,7 +3,6 @@ package wporg
 import (
 	"fmt"
 	"io/ioutil"
-	"log"
 	"regexp"
 	"strconv"
 )
@@ -23,12 +22,10 @@ var (
 func (c *Client) GetChangeLog(dir string, current, latest int) ([][]string, error) {
 	var list [][]string
 	diff := latest - current
-	log.Printf("Current: %d Latest: %d Diff: %d\n", current, latest, diff)
 	revString := strconv.Itoa(current)
 
 	for current <= latest && diff > 100 {
 		URL := fmt.Sprintf(wpChangelogURL, dir, current, 100)
-		log.Printf("URL: %s\n", URL)
 		items, err := c.doChangeLog(URL, revString)
 		if err != nil {
 			return list, err
@@ -39,7 +36,6 @@ func (c *Client) GetChangeLog(dir string, current, latest int) ([][]string, erro
 
 	// We are less than 100 updates behind, make one request
 	URL := fmt.Sprintf(wpChangelogURL, dir, latest, 100)
-	log.Printf("URL: %s\n", URL)
 	items, err := c.doChangeLog(URL, revString)
 	if err != nil {
 		return list, err
