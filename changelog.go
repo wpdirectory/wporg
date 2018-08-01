@@ -5,6 +5,7 @@ import (
 	"io/ioutil"
 	"log"
 	"regexp"
+	"strconv"
 )
 
 const (
@@ -21,12 +22,14 @@ var (
 // GetChangeLog fetches a list of updated Plugins/Themes from between the provided revisions
 func (c *Client) GetChangeLog(dir string, current, latest int) ([][]string, error) {
 	var list [][]string
-	log.Printf("Current: %d Latest: %d\n", current, latest)
+	diff := latest - current
+	log.Printf("Current: %d Latest: %d Diff: %d\n", current, latest, diff)
+	revString := strconv.Itoa(current)
 
-	for current < latest {
+	for current <= latest && diff > 100 {
 		URL := fmt.Sprintf(wpChangelogURL, dir, current, 100)
 		log.Printf("URL: %s\n", URL)
-		items, err := c.doChangeLog(URL)
+		items, err := c.doChangeLog(URL, revString)
 		if err != nil {
 			return list, err
 		}
@@ -37,7 +40,7 @@ func (c *Client) GetChangeLog(dir string, current, latest int) ([][]string, erro
 	// We are less than 100 updates behind, make one request
 	URL := fmt.Sprintf(wpChangelogURL, dir, latest, 100)
 	log.Printf("URL: %s\n", URL)
-	items, err := c.doChangeLog(URL)
+	items, err := c.doChangeLog(URL, revString)
 	if err != nil {
 		return list, err
 	}
@@ -49,7 +52,7 @@ func (c *Client) GetChangeLog(dir string, current, latest int) ([][]string, erro
 	return list, err
 }
 
-func (c *Client) doChangeLog(URL string) ([][]string, error) {
+func (c *Client) doChangeLog(URL string, revision string) ([][]string, error) {
 	var list [][]string
 
 	// Make the Request
@@ -70,7 +73,9 @@ func (c *Client) doChangeLog(URL string) ([][]string, error) {
 		if !found[match[2]] {
 			found[match[2]] = true
 			// Reverse values so slug is first
-			list = append(list, []string{match[2], match[1]})
+			if match[1] > revision {
+				list = append(list, []string{match[2], match[1]})
+			}
 		}
 	}
 
