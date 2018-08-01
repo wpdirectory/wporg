@@ -79,10 +79,8 @@ func (c *Client) GetInfo(dir, name string) ([]byte, error) {
 		return bytes, err
 	}
 
-	//log.Fatalf("Body: %s", bytes)
-
 	if string(bytes) == "false" {
-		return bytes, errors.New("No data returned")
+		return nil, errors.New("No data returned")
 	}
 
 	err = json.Unmarshal(bytes, &info)

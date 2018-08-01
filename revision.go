@@ -15,7 +15,7 @@ var (
 	regexRevision = regexp.MustCompile(`\[(\d*)\]`)
 )
 
-// GetRevision fetches a the latest revision of the Plugins/Themes Directories
+// GetRevision fetches the latest revision of the Plugins/Themes Directories
 func (c *Client) GetRevision(dir string) (int, error) {
 	var revision int
 
