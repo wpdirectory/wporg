@@ -12,10 +12,7 @@ const (
 )
 
 var (
-	// TODO: Update this to html parsing?
-	regexChangelog2 = regexp.MustCompile(`[a-z]+-[a-z]+\/`)
-	regexChangelog1 = regexp.MustCompile(`(?s)\[(.+?)\].+?\* (.+?)\/(?:tags\/)?(.+?)\/`)
-	regexChangelog  = regexp.MustCompile(`(?s)\[(.+?)\].+?\* (.+?)\/`)
+	regexChangelog = regexp.MustCompile(`(?s)\[(.+?)\].+?\* (.+?)[\/| ]`)
 )
 
 // GetChangeLog fetches a list of updated Plugins/Themes from between the provided revisions
