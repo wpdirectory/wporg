@@ -12,7 +12,7 @@ const (
 )
 
 var (
-	regexRevision = regexp.MustCompile(`\[(\d*)\]`)
+	regexRevision = regexp.MustCompile(`\[(\d+?)\]`)
 )
 
 // GetRevision fetches the latest revision of the Plugins/Themes Directories
