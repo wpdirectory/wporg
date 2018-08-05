@@ -12,7 +12,7 @@ const (
 )
 
 var (
-	regexChangelog = regexp.MustCompile(`(?s)\[(.+?)\].+?\* (.+?)[\/| ]`)
+	regexChangelog = regexp.MustCompile(`(?s)\[(\d+?)\].+?\* (.+?)[\/| ]`)
 )
 
 // GetChangeLog fetches a list of updated Plugins/Themes from between the provided revisions
