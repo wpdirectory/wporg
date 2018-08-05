@@ -154,6 +154,7 @@ func (r *InfoResponse) UnmarshalJSON(data []byte) error {
 		AuthorProfile interface{} `json:"author_profile"`
 		Requires      interface{} `json:"requires"`
 		RequiresPHP   interface{} `json:"requires_php"`
+		Tested interface{} `json:"tested"`
 		Contributors  interface{} `json:"contributors"`
 		Ratings       interface{} `json:"ratings"`
 		NumRatings    interface{} `json:"num_ratings"`
@@ -188,6 +189,14 @@ func (r *InfoResponse) UnmarshalJSON(data []byte) error {
 
 	// Requires can occasionally be a boolean (false)
 	switch v := aux.Requires.(type) {
+	case string:
+		r.Requires = v
+	default:
+		r.Requires = ""
+	}
+
+	// Tested can occasionally be a boolean (false)
+	switch v := aux.Tested.(type) {
 	case string:
 		r.Requires = v
 	default:
