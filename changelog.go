@@ -60,15 +60,10 @@ func (c *Client) doChangeLog(URL string, revision string) ([][]string, error) {
 
 	matches := regexChangelog.FindAllStringSubmatch(string(bytes), -1)
 
-	found := make(map[string]bool)
-	// Get the desired substring match and remove duplicates
+	// Get the desired substring match
 	for _, match := range matches {
-		if !found[match[2]] {
-			found[match[2]] = true
-			// Reverse values so slug is first
-			if match[1] > revision {
-				list = append(list, []string{match[2], match[1]})
-			}
+		if match[1] > revision {
+			list = append(list, []string{match[2], match[1]})
 		}
 	}
 
