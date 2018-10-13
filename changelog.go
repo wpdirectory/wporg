@@ -19,11 +19,10 @@ var (
 func (c *Client) GetChangeLog(dir string, current, latest int) ([][]string, error) {
 	var list [][]string
 	diff := latest - current
-	revString := strconv.Itoa(current)
 
 	for current <= latest && diff > 100 {
 		URL := fmt.Sprintf(wpChangelogURL, dir, current, 100)
-		items, err := c.doChangeLog(URL, revString)
+		items, err := c.doChangeLog(URL, current)
 		if err != nil {
 			return list, err
 		}
@@ -33,7 +32,7 @@ func (c *Client) GetChangeLog(dir string, current, latest int) ([][]string, erro
 
 	// We are less than 100 updates behind, make one request
 	URL := fmt.Sprintf(wpChangelogURL, dir, latest, 100)
-	items, err := c.doChangeLog(URL, revString)
+	items, err := c.doChangeLog(URL, current)
 	if err != nil {
 		return list, err
 	}
@@ -45,7 +44,7 @@ func (c *Client) GetChangeLog(dir string, current, latest int) ([][]string, erro
 	return list, err
 }
 
-func (c *Client) doChangeLog(URL string, revision string) ([][]string, error) {
+func (c *Client) doChangeLog(URL string, revision int) ([][]string, error) {
 	var list [][]string
 
 	// Make the Request
@@ -62,7 +61,11 @@ func (c *Client) doChangeLog(URL string, revision string) ([][]string, error) {
 
 	// Get the desired substring match
 	for _, match := range matches {
-		if match[1] > revision {
+		matchRev, err := strconv.Atoi(match[1])
+		if err != nil {
+			continue
+		}
+		if matchRev > revision {
 			list = append(list, []string{match[2], match[1]})
 		}
 	}
