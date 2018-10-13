@@ -19,15 +19,16 @@ var (
 func (c *Client) GetChangeLog(dir string, current, latest int) ([][]string, error) {
 	var list [][]string
 	diff := latest - current
+	limit := current + 100
 
-	for current <= latest && diff > 100 {
-		URL := fmt.Sprintf(wpChangelogURL, dir, current, 100)
+	for limit < latest && diff > 100 {
+		URL := fmt.Sprintf(wpChangelogURL, dir, limit, 100)
 		items, err := c.doChangeLog(URL, current)
 		if err != nil {
 			return list, err
 		}
 		list = append(list, items...)
-		current += 100
+		limit += 100
 	}
 
 	// We are less than 100 updates behind, make one request
@@ -69,6 +70,8 @@ func (c *Client) doChangeLog(URL string, revision int) ([][]string, error) {
 			list = append(list, []string{match[2], match[1]})
 		}
 	}
+
+	fmt.Printf("Found %d matches.\n", len(list))
 
 	return list, err
 }
