@@ -154,7 +154,7 @@ func (r *InfoResponse) UnmarshalJSON(data []byte) error {
 		AuthorProfile interface{} `json:"author_profile"`
 		Requires      interface{} `json:"requires"`
 		RequiresPHP   interface{} `json:"requires_php"`
-		Tested interface{} `json:"tested"`
+		Tested        interface{} `json:"tested"`
 		Contributors  interface{} `json:"contributors"`
 		Ratings       interface{} `json:"ratings"`
 		NumRatings    interface{} `json:"num_ratings"`
