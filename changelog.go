@@ -71,8 +71,6 @@ func (c *Client) doChangeLog(URL string, revision int) ([][]string, error) {
 		}
 	}
 
-	fmt.Printf("Found %d matches.\n", len(list))
-
 	return list, err
 }
 
