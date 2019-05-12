@@ -273,8 +273,17 @@ func (r *InfoResponse) UnmarshalJSON(data []byte) error {
 		for _, v := range aux.Screenshots.(map[string]interface{}) {
 			s := v.(map[string]interface{})
 			screenshot := Screenshot{
-				Src:     s["src"].(string),
-				Caption: s["caption"].(string),
+				Src: s["src"].(string),
+			}
+			// Handle different types for caption
+			// Can sometimes be boolean instead of string
+			switch v := s["caption"].(type) {
+			case bool:
+				screenshot.Caption = ""
+			case string:
+				screenshot.Caption = v
+			default:
+				screenshot.Caption = ""
 			}
 			r.Screenshots = append(r.Screenshots, screenshot)
 		}
